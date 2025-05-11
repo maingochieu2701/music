@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Mai Ngọc Hiếu</title>
+<style>
+  /* Reset and base */
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('1.jpg');
+    color: #08d935;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 600px;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #app {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 10px 10px 0px #32f314, -10px -10px 0px #e4d208;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 700;
+  }
+
+  audio {
+    width: 100%;
+    outline: none;
+    border-radius: 30px;
+    margin-bottom: 15px;
+    box-shadow: 5px 5px 0px hsl(294, 94%, 47%), -5px -5px red;
+  }
+
+  #controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  button {
+    background: hsla(193, 95%, 48%, 0);
+    border: none;
+    color: rgb(244, 27, 244);
+    padding: 10px 16px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+    flex: 1;
+  }
+  button:hover, button:focus {
+    background: #58d208;
+    outline: none;
+  }
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+
+  #playlist {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 250px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  #playlist ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  #playlist li {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #playlist li.active {
+    background: hsl(59, 89%, 46%);
+    font-weight: 600;
+    color: #a66bf4;
+  }
+  #playlist li:hover {
+    background: #aaef0b;
+    color: #cb41e0;
+  }
+  #playlist li button.remove-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    margin-left: 10px;
+    user-select: none;
+    transition: color 0.3s ease;
+  }
+  #playlist li button.remove-btn:hover {
+    color: #ff6b6b;
+  }
+
+  #add-song-form {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #add-song-form input[type="text"], #add-song-form input[type="file"] {
+    padding: 10px 12px;
+    border-radius: 1111px;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  #add-song-form button, #file-upload-container button {
+    background: #6de091;
+    color: #222;
+    font-weight: 700;
+  }
+  #add-song-form button:hover, #add-song-form button:focus,
+  #file-upload-container button:hover, #file-upload-container button:focus {
+    background: #55c575;
+    outline: none;
+  }
+
+  #file-upload-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  /* Scrollbar style */
+  #playlist::-webkit-scrollbar {
+    width: 6px;
+  }
+  #playlist::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #playlist::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+  
+</style>
+</head>
+<body>
+  <div id="app" role="main" aria-label="Music Player App">
+    <h1>Đây là nhạc của Mai Ngọc HIếu</h1>
+    <audio id="audio" controls preload="metadata" aria-label="Audio player">
+      Your browser does not support the audio element.
+    </audio>
+    <div id="controls" role="toolbar" aria-label="Playback controls">
+      <button id="prevBtn" aria-label="Previous track">&#9664;&#9664;</button>
+      <button id="playPauseBtn" aria-label="Play or pause">&#9654;</button>
+      <button id="nextBtn" aria-label="Next track">&#9654;&#9654;</button>
+    </div>
+    <div id="playlist" aria-label="Playlist">
+      <ul id="songList" tabindex="0"></ul>
+    </div>
+
+    <!-- Add Song by URL -->
+    <form id="add-song-form" aria-label="Add new song to playlist">
+      <input type="text" id="song-title" placeholder="Song Title" required aria-required="true" />
+      <input type="text" id="song-url" placeholder="Song URL (mp3, ogg, wav, m4a)" required aria-required="true" />
+      <button type="submit">Thêm tình yêu</button>
+    </form>
+
+    <!-- Upload local audio files -->
+    <div id="file-upload-container" aria-label="Upload local audio files">
+      <label for="file-upload" style="font-weight:600; margin-bottom:4px; cursor:pointer;">file từ máy:</label>
+      <input type="file" id="file-upload" multiple accept="audio/*" />
+      <button id="clear-local-files-btn" title="Clear added local files">Xóa sạch</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const audio = document.getElementById('audio');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const songListEl = document.getElementById('songList');
+      const addSongForm = document.getElementById('add-song-form');
+      const songTitleInput = document.getElementById('song-title');
+      const songUrlInput = document.getElementById('song-url');
+      const fileUploadInput = document.getElementById('file-upload');
+      const clearLocalFilesBtn = document.getElementById('clear-local-files-btn');
+
+      let playlist = [];
+      let currentIndex = 0;
+      let isPlaying = false;
+
+      // Keep track of local file object URLs to revoke later to free memory
+      let localFileUrls = [];
+
+      // Load playlist from localStorage
+      function loadPlaylist() {
+        const stored = localStorage.getItem('playlist');
+        if (stored) {
+          try {
+            playlist = JSON.parse(stored);
+            if (!Array.isArray(playlist)) playlist = [];
+          } catch {
+            playlist = [];
+          }
+        }
+
+        // If empty, add some default songs
+        if (playlist.length === 0) {
+          playlist = [
+            {
+              title: 'Song 1 - adam',
+              url: 'adam.mp3'
+            },
+            {
+              title: 'Song 2 - Calm Piano',
+              url: 'Giacmotinhco.mp3'
+            }
+          ];
+        }
+      }
+
+      // Save playlist to localStorage (only saves non-local files)
+      function savePlaylist() {
+        // Only save songs with URLs starting with http or https (not local file object URLs)
+        const filtered = playlist.filter(song => typeof song.url === 'string' && /^https?:\/\//i.test(song.url));
+        localStorage.setItem('playlist', JSON.stringify(filtered));
+      }
+
+      // Render playlist UI
+      function renderPlaylist() {
+        songListEl.innerHTML = '';
+        playlist.forEach((song, i) => {
+          const li = document.createElement('li');
+          li.textContent = song.title;
+          li.title = song.title;
+          li.tabIndex = 0;
+          li.setAttribute('role', 'button');
+          li.setAttribute('aria-pressed', i === currentIndex ? 'true' : 'false');
+          if (i === currentIndex) {
+            li.classList.add('active');
+          }
+
+          li.addEventListener('click', () => {
+            if (i !== currentIndex) {
+              currentIndex = i;
+              playCurrent();
+            }
+          });
+
+          // Keyboard accessible for li
+          li.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              li.click();
+            }
+          });
+
+          // remove button
+          const removeBtn = document.createElement('button');
+          removeBtn.innerHTML = '&#10006;';
+          removeBtn.className = 'remove-btn';
+          removeBtn.title = `Remove ${song.title}`;
+          removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeSong(i);
+          });
+          li.appendChild(removeBtn);
+
+          songListEl.appendChild(li);
+        });
+      }
+
+      // Remove song by index
+      function removeSong(index) {
+        if (index < 0 || index >= playlist.length) return;
+        // If local file, revoke the object URL
+        if (playlist[index].isLocal && playlist[index].url) {
+          URL.revokeObjectURL(playlist[index].url);
+          localFileUrls = localFileUrls.filter(u => u !== playlist[index].url);
+        }
+        playlist.splice(index, 1);
+        if (currentIndex >= playlist.length) {
+          currentIndex = playlist.length - 1;
+        }
+        savePlaylist();
+        if (playlist.length === 0) {
+          audio.pause();
+          audio.src = '';
+          isPlaying = false;
+        } else {
+          playCurrent();
+        }
+        renderPlaylist();
+      }
+
+      // Play current song
+      function playCurrent() {
+        if (playlist.length === 0) {
+          audio.pause();
+          audio.src = '';
+          isPlaying = false;
+          updatePlayPauseBtn();
+          return;
+        }
+        audio.src = playlist[currentIndex].url;
+        audio.play().catch(() => {
+          // Handle error if any
+        });
+        isPlaying = true;
+        updatePlayPauseBtn();
+        renderPlaylist();
+      }
+
+      // Update play/pause button text/icon
+      function updatePlayPauseBtn() {
+        playPauseBtn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9654;';
+        playPauseBtn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+      }
+
+      // Play or pause toggle
+      function togglePlayPause() {
+        if (!audio.src) {
+          playCurrent();
+          return;
+        }
+
+        if (isPlaying) {
+          audio.pause();
+          isPlaying = false;
+        } else {
+          audio.play().catch(() => {});
+          isPlaying = true;
+        }
+        updatePlayPauseBtn();
+      }
+
+      // Play previous song
+      function playPrev() {
+        if (playlist.length === 0) return;
+        currentIndex--;
+        if (currentIndex < 0) currentIndex = playlist.length - 1;
+        playCurrent();
+      }
+
+      // Play next song
+      function playNext() {
+        if (playlist.length === 0) return;
+        currentIndex++;
+        if (currentIndex >= playlist.length) currentIndex = 0;
+        playCurrent();
+      }
+
+      // Add song by URL form submit
+      addSongForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = songTitleInput.value.trim();
+        const url = songUrlInput.value.trim();
+        if (!title || !url) return;
+
+        // Basic URL validation (extension mp3, ogg, wav, m4a)
+        if (!url.match(/^https?:\/\/.+\.(mp3|ogg|wav|m4a)$/i)) {
+          alert('Please enter a valid URL to an audio file (mp3, ogg, wav, m4a).');
+          return;
+        }
+
+        playlist.push({ title, url, isLocal: false });
+        savePlaylist();
+        renderPlaylist();
+        songTitleInput.value = '';
+        songUrlInput.value = '';
+        currentIndex = playlist.length - 1;
+        playCurrent();
+      });
+
+      // Handle local file uploads
+      fileUploadInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        files.forEach(file => {
+          // Confirm audio file type
+          if (!file.type.startsWith('audio/')) {
+            alert(`File "${file.name}" is not an audio file and will be skipped.`);
+            return;
+          }
+
+          // Create object URL for file
+          const objectUrl = URL.createObjectURL(file);
+          localFileUrls.push(objectUrl);
+          playlist.push({ title: file.name, url: objectUrl, isLocal: true });
+        });
+        renderPlaylist();
+        currentIndex = playlist.length - files.length; // Play first newly added
+        playCurrent();
+
+        // Clear input so same files can be re-uploaded if needed
+        fileUploadInput.value = '';
+      });
+
+      // Clear all uploaded local files from playlist
+      clearLocalFilesBtn.addEventListener('click', () => {
+        // Remove all local files from playlist and revoke their object URLs
+        const filtered = [];
+        playlist.forEach(song => {
+          if (song.isLocal && song.url) {
+            URL.revokeObjectURL(song.url);
+          } else {
+            filtered.push(song);
+          }
+        });
+        playlist = filtered;
+        localFileUrls = [];
+        savePlaylist();
+        if (playlist.length === 0) {
+          audio.pause();
+          audio.src = '';
+          isPlaying = false;
+        } else {
+          if (currentIndex >= playlist.length) currentIndex = playlist.length - 1;
+          playCurrent();
+        }
+        renderPlaylist();
+      });
+
+      // Audio ended: play next
+      audio.addEventListener('ended', () => {
+        playNext();
+      });
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      prevBtn.addEventListener('click', playPrev);
+      nextBtn.addEventListener('click', playNext);
+
+      // Initialize
+      loadPlaylist();
+      renderPlaylist();
+      playCurrent();
+
+      // Mobile friendly: fit in viewport and scale font if width < 350
+      function adjustFontSize() {
+        const width = window.innerWidth;
+        const baseFontSize = 16;
+        let fontSize = baseFontSize;
+        if (width < 350) {
+          fontSize = width / 22;
+        }
+        document.documentElement.style.fontSize = fontSize + 'px';
+      }
+      window.addEventListener('resize', adjustFontSize);
+      adjustFontSize();
+
+    })();
+  </script>
+</body>
+</html>
+
